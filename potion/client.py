@@ -82,4 +82,5 @@ class NotionClient(NotionRequests):
     @staticmethod
     def _is_valid(token: str) -> bool:
         print(token)
+        print(8)
         return True
