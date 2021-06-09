@@ -1,0 +1,2 @@
+NOTION_VERSION: str = "2021-05-13"
+BLOCK_LIMIT: int = 100
