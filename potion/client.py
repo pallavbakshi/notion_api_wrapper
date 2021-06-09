@@ -13,6 +13,10 @@ class InvalidNotionToken(Exception):
     pass
 
 
+class InvalidBlockID(Exception):
+    pass
+
+
 class NotionRequests:
     def __init__(self, token: str) -> None:
         self.headers = {
