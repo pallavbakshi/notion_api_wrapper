@@ -1,6 +1,6 @@
 import json
 from functools import partial
-from typing import List, Dict, Callable, Optional, Any, TypedDict
+from typing import List, Dict, Callable, Optional, Any
 
 import requests
 from requests import Response

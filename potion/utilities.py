@@ -66,7 +66,8 @@ def validate_response(fn):
             return response
         text = json.loads(response.text)
         raise RuntimeError(
-            f"Response failed, status code {response.status_code}, {text['code']}, {text['message']}"
+            f"Response failed, status code {response.status_code},"
+            f" {text['code']}, {text['message']}"
         )
 
     return wrapper
