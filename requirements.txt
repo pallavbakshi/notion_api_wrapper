@@ -26,7 +26,6 @@ packaging==20.9
 pandas==1.2.4
 pathspec==0.8.1
 pluggy==0.13.1
--e git+git@github.com:pallavbakshi/notion_api.git@5e65e4cd0ede30d2e229b1583acc67ab7d3013a2#egg=potion
 py==1.10.0
 pycodestyle==2.7.0
 pyflakes==2.3.1
