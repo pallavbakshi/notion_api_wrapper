@@ -1,54 +1,22 @@
 import json
-from typing import Any, Tuple, List, Dict, no_type_check
+from typing import List, no_type_check
+from urllib import parse
 
 ID_LENGTH_WITHOUT_DASH: int = 32
-NOTION_PLATFORM: str = "notion"
-NOTION_WORKSPACE: str = "pallavtech"
+ID_LENGTH_WITH_DASH: int = 36
 
 
 def extract_block_id(url: str) -> str:
-    start_idx = url.find(NOTION_WORKSPACE) + len(NOTION_WORKSPACE) + len("/")
-    end_idx = start_idx + ID_LENGTH_WITHOUT_DASH
-    return url[start_idx:end_idx]
-
-
-def get_notion_secrets(project_name: str, block_id: str) -> Tuple[str, str]:
-    projects = get_secrets(NOTION_PLATFORM)["projects"]
-    token, blocks = _get_project_details(project_name, projects)
-    block_id = _get_complete_block_id(block_id, blocks)
-    return token, block_id
-
-
-def _get_project_details(
-    project_name: str, projects: List[Dict[str, Any]]
-) -> Tuple[str, List[Dict[str, str]]]:
-    for project in projects:
-        if project["name"] == project_name:
-            return project["token"], project["blocks"]
-    else:
-        raise RuntimeError(
-            f"No project with name {project_name} found in configuration."
-        )
-
-
-def _get_complete_block_id(block_id: str, blocks: List[Dict[str, str]]) -> str:
-    for block in blocks:
-        if block["block_id"].startswith(block_id):
-            full_block_id = format_block_id(extract_block_id(block["block_url"]))
-            return full_block_id
-    else:
-        raise RuntimeError(f"No block id found matching {block_id} in configuration.")
-
-
-def get_secrets(platform: "str") -> Any:
-    with open("config.json", "r") as f:
-        data = json.load(f)
-    return data[platform]
+    split_url = parse.urlsplit(url)
+    path_crumb = [x for x in split_url.path.split("/") if x][-1]
+    block_id = path_crumb.split("-")[-1]
+    return block_id
 
 
 def format_block_id(block_id: str) -> str:
     if len(block_id) == ID_LENGTH_WITHOUT_DASH:
-        return insert_dashes(block_id, [8, 12, 16, 20])
+        block_id = insert_dashes(block_id, [8, 12, 16, 20])
+    assert len(block_id) == ID_LENGTH_WITH_DASH
     return block_id
 
 
