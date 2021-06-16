@@ -67,3 +67,9 @@ def all_id_of_appropriate_length(ids):
         if len(id_) != ID_LENGTH_WITH_DASH:
             return False
     return True
+
+
+@pytest.mark.asyncio
+async def test_fetch_database_name(database_request, database_id):
+    name = await database_request.fetch_database_name(database_id)
+    assert name == "Notion Testing"

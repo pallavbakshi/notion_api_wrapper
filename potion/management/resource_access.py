@@ -88,6 +88,10 @@ class DatabaseRequest(ResourceRequest):
         data = response["data"]
         return data
 
+    async def fetch_database_name(self, database_id: str) -> str:
+        meta_data = await self.fetch_meta_data(database_id)
+        return meta_data.get("title", [{}])[0].get("plain_text", "")
+
     # TODO Add vulture
     @staticmethod
     async def create_row_within(database_id: str, data: Dict[str, Any]) -> None:

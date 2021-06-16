@@ -16,7 +16,7 @@ def database_data():
 @pytest.mark.asyncio
 async def test_get_data_from_database(notion_manager, database_id):
     result = await notion_manager.get_data_from_database(database_id)
-    desired_keys = ["page_id", "database_id", "database_properties"]
+    desired_keys = ["page_id", "database_id", "database_properties", "database_name"]
     assert contains_desired_fields(result, desired_keys)
 
 

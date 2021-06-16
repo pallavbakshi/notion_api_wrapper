@@ -29,7 +29,9 @@ class DatabaseParser(Parser):
     def __init__(self) -> None:
         super(DatabaseParser, self).__init__()
 
-    def get_relevant_data(self, data: NotionDatabase) -> NotionDatabase:
+    def get_relevant_data(
+        self, data: NotionDatabase, database_name: str
+    ) -> NotionDatabase:
         relevant_data_paths = {
             "page_id": "id",
             "database_id": "parent.database_id",
@@ -38,6 +40,7 @@ class DatabaseParser(Parser):
         result = []
         for row in data:
             row_data = self._extract_relevant_data(row, relevant_data_paths)
+            row_data["database_name"] = database_name
             row_data["database_properties"] = self._parse_properties(
                 row_data["database_properties"]
             )
