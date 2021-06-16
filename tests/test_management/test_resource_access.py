@@ -31,7 +31,7 @@ async def test_get_authorized_databases(database_request):
     result = await database_request.fetch_authorized_databases()
     assert len(result) == INITIAL_AUTHORIZED_DATABASES
 
-    database_ids = [database_id for _, database_id in result]
+    database_ids = [database_id for database_id, _ in result]
     assert all_id_of_appropriate_length(database_ids)
 
 
@@ -49,7 +49,10 @@ async def test_get_data_from_database(database_request, database_id):
 
 
 def all_object_types_are_page(results):
-    return all([1 for object_type in results if object_type == "page"])
+    for row in results:
+        if row["object"] != "page":
+            return False
+    return True
 
 
 @pytest.mark.asyncio
@@ -60,4 +63,7 @@ async def test_get_page_ids_within_database_id(database_request, database_id):
 
 
 def all_id_of_appropriate_length(ids):
-    return all(1 for page_id in ids if len(page_id) == ID_LENGTH_WITH_DASH)
+    for id_ in ids:
+        if len(id_) != ID_LENGTH_WITH_DASH:
+            return False
+    return True

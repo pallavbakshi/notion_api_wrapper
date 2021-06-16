@@ -4,8 +4,12 @@ from typing import Any, Dict, List, Tuple
 import aiohttp
 
 from potion.utilities.constants import NOTION_VERSION, DATABASE_URL
+from potion.utilities.type_alias import (
+    PageID,
+    DatabaseID,
+    NotionDatabase,
+)
 from potion.utilities.utilities import format_block_id
-from potion.utilities.type_alias import PageID, DatabaseID, NotionDatabaseRow
 
 
 class InvalidNotionToken(Exception):
@@ -57,7 +61,7 @@ class DatabaseRequest(ResourceRequest):
     def __init__(self, token: str) -> None:
         super(DatabaseRequest, self).__init__(token)
 
-    async def fetch_data_from(self, database_id: DatabaseID) -> List[NotionDatabaseRow]:
+    async def fetch_data_from(self, database_id: DatabaseID) -> NotionDatabase:
         database_id = format_block_id(database_id)
         endpoint = f"{DATABASE_URL}/{database_id}/query"
         response = await self.post(endpoint)
