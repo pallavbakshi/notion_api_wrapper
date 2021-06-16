@@ -7,7 +7,7 @@ PATH = "./data"
 
 @pytest.fixture
 def database_meta_data():
-    meta_data_filename = "initial_database.json"
+    meta_data_filename = "initial_database_meta_data.json"
     with open(f"{PATH}/{meta_data_filename}", "r") as f:
         meta_data = json.load(f)
     return meta_data

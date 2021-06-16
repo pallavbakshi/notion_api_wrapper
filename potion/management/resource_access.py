@@ -1,11 +1,11 @@
 import json
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 import aiohttp
 
 from potion.utilities.constants import NOTION_VERSION, DATABASE_URL
 from potion.utilities.utilities import format_block_id
-from potion.utilities.type_alias import PageID, DatabaseID
+from potion.utilities.type_alias import PageID, DatabaseID, NotionDatabaseRow
 
 
 class InvalidNotionToken(Exception):
@@ -57,18 +57,24 @@ class DatabaseRequest(ResourceRequest):
     def __init__(self, token: str) -> None:
         super(DatabaseRequest, self).__init__(token)
 
-    async def fetch_authorized_database_ids(self) -> List[DatabaseID]:
-        reply = await self.get(DATABASE_URL)
-        data = reply["data"]
-        if len(data["results"]) == 0:
-            raise NotionRequestException("No databases shared with the integration.")
-        return [elem["id"] for elem in data["results"]]
-
-    async def fetch_page_ids_within(self, database_id: str) -> List[PageID]:
+    async def fetch_data_from(self, database_id: DatabaseID) -> List[NotionDatabaseRow]:
         database_id = format_block_id(database_id)
         endpoint = f"{DATABASE_URL}/{database_id}/query"
         response = await self.post(endpoint)
         results = response["data"]["results"]
+        return results
+
+    async def fetch_authorized_databases(self) -> List[Tuple[DatabaseID, str]]:
+        reply = await self.get(DATABASE_URL)
+        data = reply["data"]
+        if len(data["results"]) == 0:
+            raise NotionRequestException("No databases shared with the integration.")
+        return [
+            (elem["id"], elem["title"][0]["plain_text"]) for elem in data["results"]
+        ]
+
+    async def fetch_page_ids_within(self, database_id: DatabaseID) -> List[PageID]:
+        results = await self.fetch_data_from(database_id)
         return [elem["id"] for elem in results]
 
     async def fetch_meta_data(self, database_id: str) -> Dict[str, Any]:
@@ -79,5 +85,6 @@ class DatabaseRequest(ResourceRequest):
         return data
 
     # TODO Add vulture
-    async def create_row_within(self, database_id: str, data: Dict[str, Any]) -> None:
+    @staticmethod
+    async def create_row_within(database_id: str, data: Dict[str, Any]) -> None:
         print(data, database_id)

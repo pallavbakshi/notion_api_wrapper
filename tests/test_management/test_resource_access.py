@@ -27,9 +27,11 @@ async def test_get_request_fail(notion_request, database_endpoint, database_id):
 
 
 @pytest.mark.asyncio
-async def test_get_authorized_database_ids(database_request):
-    database_ids = await database_request.fetch_authorized_database_ids()
-    assert len(database_ids) == INITIAL_AUTHORIZED_DATABASES
+async def test_get_authorized_databases(database_request):
+    result = await database_request.fetch_authorized_databases()
+    assert len(result) == INITIAL_AUTHORIZED_DATABASES
+
+    database_ids = [database_id for _, database_id in result]
     assert all_id_of_appropriate_length(database_ids)
 
 
@@ -37,6 +39,17 @@ async def test_get_authorized_database_ids(database_request):
 async def test_get_rows_within_database_id(database_request, database_id):
     data = await database_request.fetch_meta_data(database_id)
     assert "object" in data.keys()
+
+
+@pytest.mark.asyncio
+async def test_get_data_from_database(database_request, database_id):
+    results = await database_request.fetch_data_from(database_id)
+    assert len(results) == INITIAL_LENGTH_OF_NOTION_DATABASE
+    assert all_object_types_are_page(results)
+
+
+def all_object_types_are_page(results):
+    return all([1 for object_type in results if object_type == "page"])
 
 
 @pytest.mark.asyncio

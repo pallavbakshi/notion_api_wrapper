@@ -6,7 +6,7 @@ from typing import Union, Dict, Any
 from dotenv import find_dotenv, load_dotenv
 
 from potion.utilities.type_alias import (
-    NotionDatabase,
+    NotionDatabaseRow,
     NotionPage,
     DatabaseID,
     PageID,
@@ -17,7 +17,7 @@ load_dotenv(find_dotenv())
 
 @dataclass(frozen=True)
 class NotionDataClass:
-    data_type: Union[NotionDatabase, NotionPage]
+    data_type: Union[NotionDatabaseRow, NotionPage]
     data_id: Union[DatabaseID, PageID]
     data: Dict[str, Any]
 
