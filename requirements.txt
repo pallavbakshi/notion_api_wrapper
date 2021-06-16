@@ -2,10 +2,12 @@ aiohttp==3.7.4.post0
 cfgv==3.3.0
 colorama==0.4.4
 flake8-black==0.2.1
+glom==20.11.0
 identify==2.2.10
 mypy==0.812
 nodeenv==1.6.0
 pandas==1.2.4
+pytest-asyncio==0.15.1
 pytest-cov==2.12.1
 python-dotenv==0.17.1
 python-socketio==4.6.1

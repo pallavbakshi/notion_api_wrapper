@@ -7,7 +7,7 @@ on: [push]
 
 jobs:
   build:
-
+    environment: DEV
     runs-on: ubuntu-latest
 
     steps:
@@ -33,4 +33,4 @@ jobs:
         mypy
     - name: Test with pytest
       run: |
-        pytest
+        NOTION_DATABASE=${{ secrets.NOTION_DATABASE }} NOTION_TOKEN=${{ secrets.NOTION_TOKEN }} pytest
