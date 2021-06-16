@@ -1,6 +1,6 @@
 import pytest
 
-from potion import utilities
+from potion.utilities import utilities
 
 
 @pytest.mark.parametrize(
@@ -23,7 +23,7 @@ def test_extract_block_id(url, expected):
 @pytest.mark.parametrize(
     "block_id, expected",
     [
-        ("a" * 32, f"{'a'*8}-{'a'*4}-{'a'*4}-{'a'*4}-{'a'*12}"),
+        ("a" * 32, f"{'a' * 8}-{'a' * 4}-{'a' * 4}-{'a' * 4}-{'a' * 12}"),
     ],
 )
 def test_format_block_id(block_id, expected):
