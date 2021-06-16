@@ -1,7 +1,7 @@
 import pytest
 
 from potion.management.resource_access import NotionRequestException
-from potion.utilities.constants import ID_LENGTH_WITH_DASH
+from tests.utilities import all_object_types_are_page, all_id_of_appropriate_length
 
 INITIAL_LENGTH_OF_NOTION_DATABASE = 3
 INITIAL_AUTHORIZED_DATABASES = 1
@@ -48,25 +48,11 @@ async def test_get_data_from_database(database_request, database_id):
     assert all_object_types_are_page(results)
 
 
-def all_object_types_are_page(results):
-    for row in results:
-        if row["object"] != "page":
-            return False
-    return True
-
-
 @pytest.mark.asyncio
 async def test_get_page_ids_within_database_id(database_request, database_id):
     page_ids = await database_request.fetch_page_ids_within(database_id)
     assert len(page_ids) == INITIAL_LENGTH_OF_NOTION_DATABASE
     assert all_id_of_appropriate_length(page_ids)
-
-
-def all_id_of_appropriate_length(ids):
-    for id_ in ids:
-        if len(id_) != ID_LENGTH_WITH_DASH:
-            return False
-    return True
 
 
 @pytest.mark.asyncio

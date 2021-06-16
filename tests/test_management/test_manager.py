@@ -2,6 +2,8 @@ import json
 
 import pytest
 
+from tests.utilities import contains_desired_fields
+
 PATH = "./data"
 
 
@@ -18,10 +20,3 @@ async def test_get_data_from_database(notion_manager, database_id):
     result = await notion_manager.get_data_from_database(database_id)
     desired_keys = ["page_id", "database_id", "database_properties", "database_name"]
     assert contains_desired_fields(result, desired_keys)
-
-
-def contains_desired_fields(data, desired_fields):
-    for row in data:
-        if set(row.keys()) - set(desired_fields) != set():
-            return False
-    return True

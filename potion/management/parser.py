@@ -19,8 +19,8 @@ class Parser:
             if type_ in DATABASE_PROPERTY_PATHS.keys():
                 spec = DATABASE_PROPERTY_PATHS[type_]
                 result["property_name"] = property_name
-                result["type"] = type_
-                result["value"] = glom(nested_value, spec)
+                result["property_type"] = type_
+                result["property_value"] = glom(nested_value, spec)
                 properties.append(result)
         return properties
 
