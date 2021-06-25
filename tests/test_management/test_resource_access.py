@@ -4,15 +4,13 @@ from potion.management.resource_access import NotionRequestException
 from tests.utilities import all_object_types_are_page, all_id_of_appropriate_length
 
 INITIAL_LENGTH_OF_NOTION_DATABASE = 3
-INITIAL_AUTHORIZED_DATABASES = 1
+INITIAL_AUTHORIZED_DATABASES = 2
 
 
 @pytest.mark.asyncio
 async def test_get_request(notion_request, database_endpoint, database_id):
     reply = await notion_request.get(database_endpoint)
-    resp = reply["resp"]
     data = reply["data"]
-    assert resp.status == 200
     assert data["id"] == database_id
     assert "title" in data.keys()
     assert "properties" in data.keys()
@@ -57,5 +55,11 @@ async def test_get_page_ids_within_database_id(database_request, database_id):
 
 @pytest.mark.asyncio
 async def test_fetch_database_name(database_request, database_id):
+    name = await database_request.fetch_database_name(database_id)
+    assert name == "Notion Testing"
+
+
+@pytest.mark.asyncio
+async def test_paginate_request(database_request, database_id):
     name = await database_request.fetch_database_name(database_id)
     assert name == "Notion Testing"

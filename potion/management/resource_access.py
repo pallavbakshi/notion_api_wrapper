@@ -38,8 +38,74 @@ class ResourceRequest:
 
     async def get(self, endpoint: str) -> Dict[str, Any]:
         async with aiohttp.ClientSession(headers=self.headers) as session:
+            data = {}  # type: ignore
             async with session.get(endpoint) as resp:
-                return await self.validate_response(resp, endpoint)
+                data.update(**await self.validate_response(resp, endpoint))
+
+            if data.get("has_more", False):
+                paginated_results = await self._paginate_get(
+                    endpoint,
+                    session,
+                    data,
+                )
+                data["results"].extend(paginated_results)
+                data.update(**{"has_more": False, "next_cursor": None})
+
+            return {"data": data}
+
+    async def _paginate_get(
+        self,
+        endpoint: str,
+        session: aiohttp.ClientSession,
+        first_data_response: Dict[str, Any],
+        page_size: int = 100,
+    ) -> List[Dict[str, Any]]:
+        results = []
+        next_cursor = first_data_response["next_cursor"]
+        while first_data_response["has_more"]:
+            params = {"page_size": page_size, "start_cursor": next_cursor}
+
+            async with session.get(endpoint, params=params) as resp:
+                data = await self.validate_response(resp, endpoint)
+            results.extend(data["results"])
+            if not data["has_more"]:
+                break
+            next_cursor = data["next_cursor"]
+        return results
+
+    async def post(self, endpoint: str) -> Dict[str, Any]:
+        async with aiohttp.ClientSession(headers=self.headers) as session:
+            data = {}  # type: ignore
+            async with session.post(endpoint) as resp:
+                data.update(**await self.validate_response(resp, endpoint))
+
+            if data.get("has_more", False):
+                paginated_results = await self._paginate_post(endpoint, session, data)
+                data["results"].extend(paginated_results)
+                data.update(**{"has_more": False, "next_cursor": None})
+
+            return {"data": data}
+
+    async def _paginate_post(
+        self,
+        endpoint: str,
+        session: aiohttp.ClientSession,
+        first_data_response: Dict[str, Any],
+        page_size: int = 100,
+    ) -> List[Dict[str, Any]]:
+        results = []
+        next_cursor = first_data_response["next_cursor"]
+        while True:
+            request_data = json.dumps(
+                {"page_size": page_size, "start_cursor": next_cursor}
+            )
+            async with session.post(endpoint, data=request_data) as resp:
+                data = await self.validate_response(resp, endpoint)
+            results.extend(data["results"])
+            if not data["has_more"]:
+                break
+            next_cursor = data["next_cursor"]
+        return results
 
     @staticmethod
     async def validate_response(resp: Any, endpoint: str) -> Dict[str, Any]:
@@ -49,12 +115,7 @@ class ResourceRequest:
                 f"Request to {endpoint} failed with {resp.status} "
                 f"- {resp_data['code']} - {resp_data['message']}"
             )
-        return {"resp": resp, "data": resp_data}
-
-    async def post(self, endpoint: str) -> Dict[str, Any]:
-        async with aiohttp.ClientSession(headers=self.headers) as session:
-            async with session.post(endpoint) as resp:
-                return await self.validate_response(resp, endpoint)
+        return resp_data
 
 
 class DatabaseRequest(ResourceRequest):

@@ -1,13 +1,11 @@
 import asyncio
 import os
-from dataclasses import dataclass
 from typing import Union, Dict, Any
 
 from dotenv import find_dotenv, load_dotenv
 
+from potion.management.manager import Manager
 from potion.utilities.type_alias import (
-    NotionDatabaseRow,
-    NotionPage,
     DatabaseID,
     PageID,
 )
@@ -15,24 +13,20 @@ from potion.utilities.type_alias import (
 load_dotenv(find_dotenv())
 
 
-@dataclass(frozen=True)
-class NotionDataClass:
-    data_type: Union[NotionDatabaseRow, NotionPage]
-    data_id: Union[DatabaseID, PageID]
-    data: Dict[str, Any]
-
-
 class NotionClient:
     def __init__(self, token: str) -> None:
         self.token = token
 
-    def get_data(
-        self, data_id: Union[DatabaseID, PageID], verbose: bool = False
-    ) -> NotionDataClass:
-        pass
-
-    def get_data_dump(self, data_id: Union[DatabaseID, PageID]) -> NotionDataClass:
-        pass
+    async def get_data(
+        self,
+        block_id: Union[DatabaseID, PageID],
+        verbose: bool = False,
+        data_dump: bool = False,
+    ) -> Dict[str, Any]:
+        assert not (verbose and data_dump)
+        nm = Manager(self.token)
+        result = await nm.get_data(block_id, verbose, data_dump)
+        return result
 
 
 async def main() -> None:
