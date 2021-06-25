@@ -15,7 +15,7 @@ async def main():
     token = os.getenv("NOTION_TOKEN")
 
     notion_database = DatabaseRequest(token)
-    authorized_dbs = await notion_database.fetch_authorized_database_ids()
+    authorized_dbs = await notion_database.fetch_authorized_databases()
     database_meta_data = await notion_database.fetch_meta_data(authorized_dbs[0])
     with open(f"{PATH}/initial_database.json", "w") as f:
         json.dump(database_meta_data, f)

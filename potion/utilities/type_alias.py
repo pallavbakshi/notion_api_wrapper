@@ -1,5 +1,7 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 
-NotionDatabase = Dict[str, Any]
+NotionDatabaseRow = Dict[str, Any]
+NotionDatabase = List[NotionDatabaseRow]
+NotionPage = Dict[str, Any]
 PageID = str
 DatabaseID = str

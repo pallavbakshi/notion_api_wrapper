@@ -1,18 +1,16 @@
 import pytest
 
 from potion.management.resource_access import NotionRequestException
-from potion.utilities.constants import ID_LENGTH_WITH_DASH
+from tests.utilities import all_object_types_are_page, all_id_of_appropriate_length
 
 INITIAL_LENGTH_OF_NOTION_DATABASE = 3
-INITIAL_AUTHORIZED_DATABASES = 1
+INITIAL_AUTHORIZED_DATABASES = 2
 
 
 @pytest.mark.asyncio
 async def test_get_request(notion_request, database_endpoint, database_id):
     reply = await notion_request.get(database_endpoint)
-    resp = reply["resp"]
     data = reply["data"]
-    assert resp.status == 200
     assert data["id"] == database_id
     assert "title" in data.keys()
     assert "properties" in data.keys()
@@ -27,9 +25,11 @@ async def test_get_request_fail(notion_request, database_endpoint, database_id):
 
 
 @pytest.mark.asyncio
-async def test_get_authorized_database_ids(database_request):
-    database_ids = await database_request.fetch_authorized_database_ids()
-    assert len(database_ids) == INITIAL_AUTHORIZED_DATABASES
+async def test_get_authorized_databases(database_request):
+    result = await database_request.fetch_authorized_databases()
+    assert len(result) == INITIAL_AUTHORIZED_DATABASES
+
+    database_ids = [database_id for database_id, _ in result]
     assert all_id_of_appropriate_length(database_ids)
 
 
@@ -40,11 +40,26 @@ async def test_get_rows_within_database_id(database_request, database_id):
 
 
 @pytest.mark.asyncio
+async def test_get_data_from_database(database_request, database_id):
+    results = await database_request.fetch_data_from(database_id)
+    assert len(results) == INITIAL_LENGTH_OF_NOTION_DATABASE
+    assert all_object_types_are_page(results)
+
+
+@pytest.mark.asyncio
 async def test_get_page_ids_within_database_id(database_request, database_id):
     page_ids = await database_request.fetch_page_ids_within(database_id)
     assert len(page_ids) == INITIAL_LENGTH_OF_NOTION_DATABASE
     assert all_id_of_appropriate_length(page_ids)
 
 
-def all_id_of_appropriate_length(ids):
-    return all(1 for page_id in ids if len(page_id) == ID_LENGTH_WITH_DASH)
+@pytest.mark.asyncio
+async def test_fetch_database_name(database_request, database_id):
+    name = await database_request.fetch_database_name(database_id)
+    assert name == "Notion Testing"
+
+
+@pytest.mark.asyncio
+async def test_paginate_request(database_request, database_id):
+    name = await database_request.fetch_database_name(database_id)
+    assert name == "Notion Testing"

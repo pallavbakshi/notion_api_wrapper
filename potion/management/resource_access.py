@@ -1,11 +1,15 @@
 import json
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 import aiohttp
 
 from potion.utilities.constants import NOTION_VERSION, DATABASE_URL
+from potion.utilities.type_alias import (
+    PageID,
+    DatabaseID,
+    NotionDatabase,
+)
 from potion.utilities.utilities import format_block_id
-from potion.utilities.type_alias import PageID, DatabaseID
 
 
 class InvalidNotionToken(Exception):
@@ -34,8 +38,74 @@ class ResourceRequest:
 
     async def get(self, endpoint: str) -> Dict[str, Any]:
         async with aiohttp.ClientSession(headers=self.headers) as session:
+            data = {}  # type: ignore
             async with session.get(endpoint) as resp:
-                return await self.validate_response(resp, endpoint)
+                data.update(**await self.validate_response(resp, endpoint))
+
+            if data.get("has_more", False):
+                paginated_results = await self._paginate_get(
+                    endpoint,
+                    session,
+                    data,
+                )
+                data["results"].extend(paginated_results)
+                data.update(**{"has_more": False, "next_cursor": None})
+
+            return {"data": data}
+
+    async def _paginate_get(
+        self,
+        endpoint: str,
+        session: aiohttp.ClientSession,
+        first_data_response: Dict[str, Any],
+        page_size: int = 100,
+    ) -> List[Dict[str, Any]]:
+        results = []
+        next_cursor = first_data_response["next_cursor"]
+        while first_data_response["has_more"]:
+            params = {"page_size": page_size, "start_cursor": next_cursor}
+
+            async with session.get(endpoint, params=params) as resp:
+                data = await self.validate_response(resp, endpoint)
+            results.extend(data["results"])
+            if not data["has_more"]:
+                break
+            next_cursor = data["next_cursor"]
+        return results
+
+    async def post(self, endpoint: str) -> Dict[str, Any]:
+        async with aiohttp.ClientSession(headers=self.headers) as session:
+            data = {}  # type: ignore
+            async with session.post(endpoint) as resp:
+                data.update(**await self.validate_response(resp, endpoint))
+
+            if data.get("has_more", False):
+                paginated_results = await self._paginate_post(endpoint, session, data)
+                data["results"].extend(paginated_results)
+                data.update(**{"has_more": False, "next_cursor": None})
+
+            return {"data": data}
+
+    async def _paginate_post(
+        self,
+        endpoint: str,
+        session: aiohttp.ClientSession,
+        first_data_response: Dict[str, Any],
+        page_size: int = 100,
+    ) -> List[Dict[str, Any]]:
+        results = []
+        next_cursor = first_data_response["next_cursor"]
+        while True:
+            request_data = json.dumps(
+                {"page_size": page_size, "start_cursor": next_cursor}
+            )
+            async with session.post(endpoint, data=request_data) as resp:
+                data = await self.validate_response(resp, endpoint)
+            results.extend(data["results"])
+            if not data["has_more"]:
+                break
+            next_cursor = data["next_cursor"]
+        return results
 
     @staticmethod
     async def validate_response(resp: Any, endpoint: str) -> Dict[str, Any]:
@@ -45,30 +115,31 @@ class ResourceRequest:
                 f"Request to {endpoint} failed with {resp.status} "
                 f"- {resp_data['code']} - {resp_data['message']}"
             )
-        return {"resp": resp, "data": resp_data}
-
-    async def post(self, endpoint: str) -> Dict[str, Any]:
-        async with aiohttp.ClientSession(headers=self.headers) as session:
-            async with session.post(endpoint) as resp:
-                return await self.validate_response(resp, endpoint)
+        return resp_data
 
 
 class DatabaseRequest(ResourceRequest):
     def __init__(self, token: str) -> None:
         super(DatabaseRequest, self).__init__(token)
 
-    async def fetch_authorized_database_ids(self) -> List[DatabaseID]:
-        reply = await self.get(DATABASE_URL)
-        data = reply["data"]
-        if len(data["results"]) == 0:
-            raise NotionRequestException("No databases shared with the integration.")
-        return [elem["id"] for elem in data["results"]]
-
-    async def fetch_page_ids_within(self, database_id: str) -> List[PageID]:
+    async def fetch_data_from(self, database_id: DatabaseID) -> NotionDatabase:
         database_id = format_block_id(database_id)
         endpoint = f"{DATABASE_URL}/{database_id}/query"
         response = await self.post(endpoint)
         results = response["data"]["results"]
+        return results
+
+    async def fetch_authorized_databases(self) -> List[Tuple[DatabaseID, str]]:
+        reply = await self.get(DATABASE_URL)
+        data = reply["data"]
+        if len(data["results"]) == 0:
+            raise NotionRequestException("No databases shared with the integration.")
+        return [
+            (elem["id"], elem["title"][0]["plain_text"]) for elem in data["results"]
+        ]
+
+    async def fetch_page_ids_within(self, database_id: DatabaseID) -> List[PageID]:
+        results = await self.fetch_data_from(database_id)
         return [elem["id"] for elem in results]
 
     async def fetch_meta_data(self, database_id: str) -> Dict[str, Any]:
@@ -78,6 +149,11 @@ class DatabaseRequest(ResourceRequest):
         data = response["data"]
         return data
 
+    async def fetch_database_name(self, database_id: str) -> str:
+        meta_data = await self.fetch_meta_data(database_id)
+        return meta_data.get("title", [{}])[0].get("plain_text", "")
+
     # TODO Add vulture
-    async def create_row_within(self, database_id: str, data: Dict[str, Any]) -> None:
+    @staticmethod
+    async def create_row_within(database_id: str, data: Dict[str, Any]) -> None:
         print(data, database_id)

@@ -3,6 +3,8 @@ import os
 import pytest
 from dotenv import load_dotenv, find_dotenv
 
+from potion.client import NotionClient
+from potion.management.manager import Manager
 from potion.management.parser import DatabaseParser
 from potion.management.resource_access import (
     ResourceRequest,
@@ -62,3 +64,15 @@ def page_endpoint(page_id):
 def data_parser():
     dc = DatabaseParser()
     return dc
+
+
+@pytest.fixture
+def notion_manager(token):
+    nm = Manager(token)
+    return nm
+
+
+@pytest.fixture
+def notion_client(token):
+    nc = NotionClient(token)
+    return nc
